@@ -15,7 +15,7 @@ boot.index <- as.numeric(args[1])
 
 # set initial seed for reproducibility 
 set.seed(123)
-boot.seed <- sample(1e6, size = 3, replace = F)[boot.index]
+boot.seed <- sample(1e6, size = 1000, replace = F)[boot.index]
 set.seed(boot.seed)
 truth <- get_truth(5000,15,30)
 
