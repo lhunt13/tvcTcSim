@@ -16,7 +16,8 @@ boot.index <- as.numeric(args[1])
 # set initial seed for reproducibility 
 set.seed(123)
 boot.seed <- sample(1e6, size = 3, replace = F)[boot.index]
-get_truth(5000,15,30)
+set.seed(boot.seed)
+get_truth(500,15,30)
 
 # store results
 # save file in "truth" directory with file name "run-<boot.index>.rds"
