@@ -13,4 +13,6 @@ if [ ! -f $output_file ]; then
 	Rscript getTruthParal.R $SGE_TASK_ID
 fi;
 
+Rscript merge.R
+
 
