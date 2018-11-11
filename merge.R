@@ -1,6 +1,12 @@
-# merge .rds files to one big .rds file
+# merge all files ina folcer into one big .rds file
 
-mergedat <- do.call('rbind', lapply(list.files("truth/", full.names = TRUE), readRDS))
-grand_ave <- mean(mergedat)
+args <- commandArgs(trailingOnly = TRUE)
 
-saveRDS(grand_ave,"truth/grand_average.rds")
+# `folder` is a character denoting the folder in which to merge all files
+# these are "truth/" and "results/"
+merge_data <- function(folder){
+  do.call('rbind', lapply(list.files(folder, full.names = TRUE), readRDS))
+}
+
+merg_data(args)
+  
