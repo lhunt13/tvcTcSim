@@ -1,0 +1,1 @@
+Simulate longitudinal survival data that exibits time varying confounding and temporal confounding. Use to perform simulation study of an analysis that adjusts for both of these.

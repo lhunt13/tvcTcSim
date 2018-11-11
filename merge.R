@@ -8,5 +8,7 @@ merge_data <- function(folder){
   do.call('rbind', lapply(list.files(folder, full.names = TRUE), readRDS))
 }
 
-merg_data(args)
+merged <- merge_data(args)
+
+saveRDS(paste0(folder,"merged.RDS"))
   
