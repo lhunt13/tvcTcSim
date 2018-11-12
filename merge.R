@@ -1,5 +1,5 @@
 # merge all files ina folcer into one big .rds file
-
+library(getopt)
 args <- commandArgs(trailingOnly = TRUE)
 
 # `folder` is a character denoting the folder in which to merge all files

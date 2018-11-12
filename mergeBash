@@ -6,6 +6,6 @@
 #$ -j y
 #$ -R y
 
-Rscript merge.R "truth/"
+Rscript merge.R "$truth/"
 
-Rscript merge.R "results/"
+Rscript merge.R "$results/"

@@ -125,7 +125,7 @@ analyze <- function(DATA,BAND,NUMSIM,d,p){
   return(rmdiff)
 }
 
-# this function computes a 95% CI using bootstrap in two ways
+# this function computes a 95% CI using bootstrap
 bootstrap <- function(DATA,R,BAND,NUMSIM,d,p){
   boots <- numeric(0)
   setkey(DATA,id)

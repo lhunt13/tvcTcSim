@@ -1,15 +1,18 @@
 # analyze data on cluster
+library(getopt)
 library(data.table)
-library(speedglm)
 library(splines)
-library(rms)
 source('parVals.R')
 source('simulateData.R')
 source('analyzeData.R')
 
 # define some global variables
 samp_size <- 500
-boot_num <- 100
+boot_num <- 10
+tval <- 3
+d <- 30
+p <- 15
+bandwidth <- 365
 
 # set seed for run SGE_TASK_ID
 # grab value of SGE_TASK_ID 
@@ -19,17 +22,17 @@ boot.index <- as.numeric(args[1])
 
 # set initial seed for reproducibility 
 set.seed(123)
-boot.seed <- sample(1e6, size = 1000, replace = F)[boot.index]
+boot.seed <- sample(1e6, size = tval, replace = F)[boot.index]
 set.seed(boot.seed)
 
 # simulate data
 data <- sim_obs(samp_size,ssU,pR1,ssO,u_star)
 
 # perform analysis
-rmdiff <- analyze(DATA=data, BAND=365, NUMSIM=samp_size*4,30,15)
+rmdiff <- analyze(DATA=data,BAND=bandwidth,NUMSIM=samp_size*4,d,p)
 
 # perform bootstrap
-ci <- bootstrap(data,boot_num)
+ci <- bootstrap(data,boot_num,BAND=bandwidth,NUMSIM=samp_size*4,d,p)
 
 results <- c(rmdiff,ci)
 
