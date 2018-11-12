@@ -125,17 +125,15 @@ analyze <- function(DATA,BAND,NUMSIM,d,p){
   return(rmdiff)
 }
 
-# this function resamples the data by re-sampling whole patient histories
-resample <- function(DATA){
-  
-  
-  return(data_resampled)
-}
-
-# this function computes a 95% CI using bootstrap
-bootstrap <- function(DATA, R){
-  
-  
-  return(c(lower,upper))
+# this function computes a 95% CI using bootstrap in two ways
+bootstrap <- function(DATA,R,BAND,NUMSIM,d,p){
+  boots <- numeric(0)
+  setkey(DATA,id)
+  for(r in 1:R){
+    ids_resampled <- sample(unique(DATA$id), length(unique(DATA$id)), replace = TRUE)
+    data_resampled <- DATA[J(ids_resampled), allow.cartesian=TRUE]
+    boots[r] <- analyze(DATA = data_resampled,BAND,NUMSIM,d,p)
+  }
+  return(quantile(boots,probs=c(.025,.975)))
 }
 
