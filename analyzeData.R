@@ -2,10 +2,10 @@
 
 # fit the models for the nuisance parameters
 fit_models <- function(DAT){
-  rxb <- speedglm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
+  rxb <- glm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
                   data=DAT, family=binomial(logit))
   
-  S <- speedglm(S ~ day + rxb + I(V==1) + I(V==2) + U,
+  S <- glm(S ~ day + rxb + I(V==1) + I(V==2) + U,
            data=DAT, family=binomial(logit))
   return(list(rxb=rxb,S=S))
 }

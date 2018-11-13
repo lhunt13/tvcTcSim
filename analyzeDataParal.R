@@ -8,9 +8,9 @@ source('simulateData.R')
 source('analyzeData.R')
 
 # define some global variables
-samp_size <- 500
-boot_num <- 10
-tval <- 3
+samp_size <- 5000
+boot_num <- 100
+tval <- 100
 bandwidth <- 365
 
 # set seed for run SGE_TASK_ID
