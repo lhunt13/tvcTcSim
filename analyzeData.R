@@ -1,91 +1,44 @@
 # analyze data
 
-# this function fits the models for the nuisance parameters
+# fit the models for the nuisance parameters
 fit_models <- function(DAT){
-  rxb <- rms::orm(rxb ~ day + rxb_lag + oop_lag + V_lag + cumcost_lag,
-                  data=DAT)
+  rxb <- speedglm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
+                  data=DAT, family=binomial(logit))
   
-  oop1 <- glm(zero ~ day + rxb + oop_lag + V_lag + cumcost_lag,
-              data=DAT, family=binomial(logit))
-  
-  oop2 <- lm(oop ~ day + rxb + oop_lag + V_lag + cumcost_lag,
-             data=DAT[zero > 0])
-  
-  S <- glm(S ~ day + rxb + oop + V + cumcost + U,
+  S <- speedglm(S ~ day + rxb + I(V==1) + I(V==2) + U,
            data=DAT, family=binomial(logit))
-  return(list(rxb=rxb,oop1=oop1,oop2=oop2,S=S))
+  return(list(rxb=rxb,S=S))
 }
 
-# this function computes the g-computation integral numerically
-g_comp <- function(BSLN,MODELS,V_lag1,V_lag2,V,COST){
+# compute the g-computation integral numerically
+g_comp <- function(BSLN,MODELS,V){
   n <- BSLN[,.N]
   
-  rxb <- matrix(NA,nrow=n,ncol=270)
-  oop <- matrix(NA,nrow=n,ncol=270)
-  S   <- matrix(NA,nrow=n,ncol=270)
+  rxb <- matrix(NA,nrow=n,ncol=50)
+  S   <- matrix(NA,nrow=n,ncol=50)
   
   rxb[,1] <- BSLN[,rxb]
-  oop[,1] <- BSLN[,oop]
   S[,1] <- rep(0,n)
   
-  for(t in 2:270){
+  for(t in 2:50){
     ###### rxb
-    df <- data.frame(
-      day=t,rxb_lag=rxb[,t-1],oop_lag=oop[,t-1],V_lag=V_lag1,cumcost_lag=COST[t-1]
+    X <- model.matrix(
+      rep(1,n) ~ rxb[,t-1] + rep(V,n)
     )
-    rxb_probs <- predict(MODELS$rxb,newdata = df,type = "fitted.ind",codes = TRUE)
-    rxb[,t] <- apply(rxb_probs,1,function(x){
-      base::sample(c(paste(0:4)),1,prob=x)
-    })
-    
-    ###### oop1
-    zero <- rbinom(n, 1, 
-                   prob = predict(MODELS$oop1,
-                                  newdata = data.frame(
-                                    day=t,
-                                    rxb=rxb[,t],
-                                    oop_lag=oop[,t-1],
-                                    V_lag=V_lag1,
-                                    cumcost_lag=COST[t-1]
-                                  ), type = "response")
-    )
-    
-    ###### oop2
-    
-    oop[,t] <- rnorm(n, mean = predict(MODELS$oop2,
-                                       newdata = data.frame(
-                                         day=t,
-                                         rxb=rxb[,t],
-                                         oop_lag=oop[,t-1],
-                                         V_lag=V_lag2,
-                                         cumcost_lag=COST[t-1]
-                                       )),
-                     sd = sqrt(summary(MODELS$oop2)$sigma)
-    )
-    
-    oop[,t] <- (zero == 1)*oop[,t]
-    
+    rxb[,t] <- rbinom(n,1,expit(X %*% na.omit(MODELS[["rxb"]]$coefficients)))
+
     ###### S
-    S[,t] <- rbinom(n, 1, 
-                    prob = predict(MODELS$S,
-                                   newdata = data.frame(
-                                     day=t,
-                                     rxb=rxb[,t],
-                                     oop=oop[,t],
-                                     V=V,
-                                     cumcost=COST[t],
-                                     U=u_star
-                                   ), type = "response")
+    X <- model.matrix(
+      rep(1,n) ~ rep(t,n) + rxb[,t] + rep(V,n) + rep(u_star,n)
     )
+    S[,t] <- rbinom(n,1,expit(X %*% na.omit(MODELS[["S"]]$coefficients)))
   }
   survival <- 1 - colMeans(S)
   return(survival)
 }
 
-# this wraps `fit_models` and `g_comp` into a function that
-# computes the restricted mean difference of the 
-# counterfactual survival curves
-analyze <- function(DATA,BAND,NUMSIM,d,p){
+# compute the restricted mean difference
+analyze <- function(DATA,BAND,NUMSIM){
   # fit models
   b_mods <- fit_models(DAT = DATA[U < u_star])
   
@@ -95,29 +48,8 @@ analyze <- function(DATA,BAND,NUMSIM,d,p){
   bsln <- DATA[day==1][sample(.N, NUMSIM, replace=TRUE,
                               prob = dnorm(DATA[day==1]$U, mean=u_star, sd=BAND))] 
   
-  cost <- sort(rep(seq(from = p, to = 270/d * p, by = p),d))
-  
-  b_V      <- factor("1", levels = na.omit(unique(DATA[U < u_star,V])))
-  b_V_lag1 <- factor("1", levels = na.omit(unique(DATA[U < u_star,V_lag])))
-  b_V_lag2 <- factor("1", levels = na.omit(unique(DATA[U < u_star & zero==1,V_lag])))
-  
-  g_V      <- factor("2", levels = na.omit(unique(DATA[U >= u_star,V])))
-  g_V_lag1 <- factor("2", levels = na.omit(unique(DATA[U >= u_star,V_lag])))
-  g_V_lag2 <- factor("2", levels = na.omit(unique(DATA[U >= u_star & zero==1,V_lag])))
-  
-  
-  brand   <- g_comp(bsln[U < u_star], 
-                    b_mods,
-                    V_lag1 = b_V_lag1,
-                    V_lag2 = b_V_lag2,
-                    V = b_V,
-                    COST = cost)
-  generic   <- g_comp(bsln[U >= u_star], 
-                      g_mods,
-                      V_lag1 = g_V_lag1,
-                      V_lag2 = g_V_lag2,
-                      V = g_V,
-                      COST = cost)
+  brand   <- g_comp(bsln[U < u_star],b_mods,V=1)
+  generic <- g_comp(bsln[U >= u_star],g_mods,V=2)
   
   # get restricted mean difference
   rmdiff <- sum(brand - generic)
@@ -125,14 +57,14 @@ analyze <- function(DATA,BAND,NUMSIM,d,p){
   return(rmdiff)
 }
 
-# this function computes a 95% CI using bootstrap
-bootstrap <- function(DATA,R,BAND,NUMSIM,d,p){
+# compute a 95% CI using bootstrap
+bootstrap <- function(DATA,R,BAND,NUMSIM){
   boots <- numeric(0)
   setkey(DATA,id)
   for(r in 1:R){
     ids_resampled <- sample(unique(DATA$id), length(unique(DATA$id)), replace = TRUE)
     data_resampled <- DATA[J(ids_resampled), allow.cartesian=TRUE]
-    boots[r] <- analyze(DATA = data_resampled,BAND,NUMSIM,d,p)
+    boots[r] <- analyze(DATA = data_resampled,BAND,NUMSIM)
   }
   return(quantile(boots,probs=c(.025,.975)))
 }

@@ -2,6 +2,7 @@
 library(getopt)
 library(data.table)
 library(splines)
+library(rms)
 source('parVals.R')
 source('simulateData.R')
 source('analyzeData.R')
@@ -10,8 +11,6 @@ source('analyzeData.R')
 samp_size <- 500
 boot_num <- 10
 tval <- 3
-d <- 30
-p <- 15
 bandwidth <- 365
 
 # set seed for run SGE_TASK_ID
@@ -26,13 +25,13 @@ boot.seed <- sample(1e6, size = tval, replace = F)[boot.index]
 set.seed(boot.seed)
 
 # simulate data
-data <- sim_obs(samp_size,ssU,pR1,ssO,u_star)
+data <- sim_obs(samp_size,ssU,pR1,u_star)
 
 # perform analysis
-rmdiff <- analyze(DATA=data,BAND=bandwidth,NUMSIM=samp_size*4,d,p)
+rmdiff <- analyze(DATA=data,BAND=bandwidth,NUMSIM=samp_size*4)
 
 # perform bootstrap
-ci <- bootstrap(data,boot_num,BAND=bandwidth,NUMSIM=samp_size*4,d,p)
+ci <- bootstrap(data,boot_num,BAND=bandwidth,NUMSIM=samp_size*4)
 
 results <- c(rmdiff,ci)
 
