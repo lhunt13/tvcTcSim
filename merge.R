@@ -3,7 +3,7 @@ library(getopt)
 args <- commandArgs(trailingOnly = TRUE)
 
 # `folder` is a character denoting the folder in which to merge all files
-# these are "truth/" and "results/"
+# these are "./truth/" and "./results/"
 merge_data <- function(folder){
   do.call('rbind', lapply(list.files(folder, full.names = TRUE), readRDS))
 }

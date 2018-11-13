@@ -2,10 +2,10 @@
 
 # fit the models for the nuisance parameters
 fit_models <- function(DAT){
-  rxb <- glm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
+  rxb <- speedglm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
                   data=DAT, family=binomial(logit))
   
-  S <- glm(S ~ day + rxb + I(V==1) + I(V==2) + U,
+  S <- speedglm(S ~ day + rxb + I(V==1) + I(V==2) + U,
            data=DAT, family=binomial(logit))
   return(list(rxb=rxb,S=S))
 }
@@ -21,15 +21,16 @@ g_comp <- function(BSLN,MODELS,V){
   S[,1] <- rep(0,n)
   
   for(t in 2:50){
+    # note that `rep(1,n)` is used where V should be
     ###### rxb
     X <- model.matrix(
-      rep(1,n) ~ rxb[,t-1] + rep(V,n)
+      rep(1,n) ~ rxb[,t-1] + rep(1,n)
     )
     rxb[,t] <- rbinom(n,1,expit(X %*% na.omit(MODELS[["rxb"]]$coefficients)))
 
     ###### S
     X <- model.matrix(
-      rep(1,n) ~ rep(t,n) + rxb[,t] + rep(V,n) + rep(u_star,n)
+      rep(1,n) ~ rep(t,n) + rxb[,t] + rep(1,n) + rep(u_star,n)
     )
     S[,t] <- rbinom(n,1,expit(X %*% na.omit(MODELS[["S"]]$coefficients)))
   }
