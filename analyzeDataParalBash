@@ -10,5 +10,5 @@
 mkdir -p results
 output_file="results/run-$SGE_TASK_ID.rds"
 if [ ! -f $output_file ]; then
-	Rscript analyzeDataParal.R $SGE_TASK_ID
+	Rscript analyzeDataParal.R $SGE_TASK_ID 5000 500 365 1000
 fi;

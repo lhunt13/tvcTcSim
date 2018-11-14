@@ -1,14 +1,26 @@
-# merge all files ina folcer into one big .rds file
-library(getopt)
-args <- commandArgs(trailingOnly = TRUE)
-
-# `folder` is a character denoting the folder in which to merge all files
-# these are "./truth/" and "./results/"
-merge_data <- function(folder){
-  do.call('rbind', lapply(list.files(folder, full.names = TRUE), readRDS))
+# rscript to merge all .rds files to a chosen output 
+# in a given folder with a given pattern
+main <- function(){
+  args <- commandArgs(trailingOnly = TRUE)
+  folder <- args[1]
+  pattern <- args[2]
+  output <- args[3]
+  
+  merged <- do.call('rbind', 
+                    lapply(list.files(path = folder,
+                                      pattern = pattern, 
+                                      full.names = TRUE), readRDS))
+  
+  saveRDS(merged,paste0(folder,output))
+  
 }
 
-merged <- merge_data(args)
+main()
 
-saveRDS(paste0(folder,"merged.RDS"))
+
+  
+
+
+
+
   

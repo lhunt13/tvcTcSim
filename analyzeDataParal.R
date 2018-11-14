@@ -5,17 +5,18 @@ source('parVals.R')
 source('simulateData.R')
 source('analyzeData.R')
 
-# define some global variables
-samp_size <- 500
-boot_num <- 100
-tval <- 1000
-bandwidth <- 365
-
 # set seed for run SGE_TASK_ID
 # grab value of SGE_TASK_ID 
 # (which is given by "-t" in the corresponding bash script)
 args <- commandArgs(trailingOnly = TRUE)
 boot.index <- as.numeric(args[1])
+
+# define some global variables
+samp_size <- as.numeric(args[2])
+boot_num <- as.numeric(args[3])
+bandwidth <- as.numeric(args[4])
+tval <- as.numeric(args[5])
+
 
 # set initial seed for reproducibility 
 set.seed(123)
