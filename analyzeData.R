@@ -2,16 +2,16 @@
 
 # fit the models for the nuisance parameters
 fit_models <- function(DAT){
-  rxb <- speedglm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
+  rxb <- glm(rxb ~ rxb_lag + I(V_lag==1) + I(V_lag==2),
                   data=DAT, family=binomial(logit))
   
-  S <- speedglm(S ~ day + rxb + I(V==1) + I(V==2) + U,
+  S <- glm(S ~ day + rxb + I(V==1) + I(V==2) + U,
            data=DAT, family=binomial(logit))
   return(list(rxb=rxb,S=S))
 }
 
 # compute the g-computation integral numerically
-g_comp <- function(BSLN,MODELS,V){
+g_comp <- function(BSLN,MODELS){
   n <- BSLN[,.N]
   
   rxb <- matrix(NA,nrow=n,ncol=50)
@@ -24,13 +24,13 @@ g_comp <- function(BSLN,MODELS,V){
     # note that `rep(1,n)` is used where V should be
     ###### rxb
     X <- model.matrix(
-      rep(1,n) ~ rxb[,t-1] + rep(1,n)
+      rep(2,n) ~ rxb[,t-1] + rep(1,n)
     )
     rxb[,t] <- rbinom(n,1,expit(X %*% na.omit(MODELS[["rxb"]]$coefficients)))
 
     ###### S
     X <- model.matrix(
-      rep(1,n) ~ rep(t,n) + rxb[,t] + rep(1,n) + rep(u_star,n)
+      rep(2,n) ~ rep(t,n) + rxb[,t] + rep(1,n) + rep(u_star,n)
     )
     S[,t] <- rbinom(n,1,expit(X %*% na.omit(MODELS[["S"]]$coefficients)))
   }
@@ -49,8 +49,8 @@ analyze <- function(DATA,BAND,NUMSIM){
   bsln <- DATA[day==1][sample(.N, NUMSIM, replace=TRUE,
                               prob = dnorm(DATA[day==1]$U, mean=u_star, sd=BAND))] 
   
-  brand   <- g_comp(bsln[U < u_star],b_mods,V=1)
-  generic <- g_comp(bsln[U >= u_star],g_mods,V=2)
+  brand   <- g_comp(bsln[U < u_star],b_mods)
+  generic <- g_comp(bsln[U >= u_star],g_mods)
   
   # get restricted mean difference
   rmdiff <- sum(brand - generic)

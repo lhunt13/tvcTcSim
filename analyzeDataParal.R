@@ -1,14 +1,12 @@
 # analyze data on cluster
 library(getopt)
 library(data.table)
-library(splines)
-library(rms)
 source('parVals.R')
 source('simulateData.R')
 source('analyzeData.R')
 
 # define some global variables
-samp_size <- 5000
+samp_size <- 500
 boot_num <- 100
 tval <- 1000
 bandwidth <- 365
